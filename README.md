@@ -2,4 +2,10 @@
 
 Automated build for musl-based rsync binary to run on Android via ADB.
 
-Download the binary in the [Releases](https://github.com/fluxth/rsync-android/releases) section.
+## Download
+
+Download binary from the [Releases](https://github.com/fluxth/rsync-android/releases) section.
+
+## Acknowledgement
+
+This repo is an automation of build steps from https://howtos.davidsebek.com/android-rsync-adb.html
