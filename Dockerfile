@@ -1,4 +1,4 @@
-FROM debian:sid@sha256:7469781d68f44940c9494eeba6e7ab89063947f794320d61c193bf027aeb7761
+FROM debian:sid-20260713@sha256:7469781d68f44940c9494eeba6e7ab89063947f794320d61c193bf027aeb7761
 
 # renovate: datasource=github-releases depName=RsyncProject/rsync extractVersion=^v(?<version>.*)$
 ARG RSYNC_VERSION=3.4.4
