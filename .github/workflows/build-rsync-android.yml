@@ -4,10 +4,6 @@ on:
   schedule:
     - cron: "43 15 * * *" # daily at 00:43 JST
   workflow_dispatch:
-    inputs:
-      rsync_version:
-        description: rsync version to build (overrides the Dockerfile default)
-        required: false
 
 jobs:
   check:
@@ -21,11 +17,7 @@ jobs:
       - name: Resolve rsync version
         id: version
         run: |
-          if [ -n "${{ inputs.rsync_version }}" ]; then
-            VERSION="${{ inputs.rsync_version }}"
-          else
-            VERSION=$(grep -oP '(?<=^ARG RSYNC_VERSION=).*' Dockerfile)
-          fi
+          VERSION=$(grep -oP '(?<=^ARG RSYNC_VERSION=).*' Dockerfile)
           echo "rsync_version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Check if release is already up to date
