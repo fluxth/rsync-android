@@ -4,5 +4,11 @@
     "config:recommended",
     "docker:pinDigests",
     "customManagers:dockerfileVersions"
-  ]
+  ],
+
+  "reviewers": ["fluxth"],
+
+  // Run every 1st of month from 0-7 AM
+  "schedule": ["* 0-7 1 * *"],
+  "timezone": "Asia/Tokyo",
 }
