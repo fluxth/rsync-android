@@ -1,9 +1,8 @@
 name: Build rsync for Android
 
 on:
-  push:
-    branches: [main]
-    paths: [Dockerfile]
+  schedule:
+    - cron: "43 15 * * *" # daily at 00:43 JST
   workflow_dispatch:
     inputs:
       rsync_version:
@@ -11,9 +10,10 @@ on:
         required: false
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-24.04
     outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
       rsync_version: ${{ steps.version.outputs.rsync_version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,8 +28,34 @@ jobs:
           fi
           echo "rsync_version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Check if release is already up to date
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          TAG="v${{ steps.version.outputs.rsync_version }}"
+          BUILT_SHA=$(gh release view "$TAG" --json body -q .body 2>/dev/null | grep -oP '(?<=Built from commit: )[0-9a-f]{40}' || true)
+
+          if [ "$BUILT_SHA" = "${{ github.sha }}" ]; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Build
-        run: docker build --build-arg RSYNC_VERSION="${{ steps.version.outputs.rsync_version }}" -t rsync-builder .
+        run: docker build --build-arg RSYNC_VERSION="${{ needs.check.outputs.rsync_version }}" -t rsync-builder .
 
       - name: Extract binary
         run: |
@@ -43,7 +69,8 @@ jobs:
           path: compiled/
 
   release:
-    needs: build
+    needs: [check, build]
+    if: needs.check.outputs.should_build == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -55,5 +82,7 @@ jobs:
 
       - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
-          tag_name: v${{ needs.build.outputs.rsync_version }}
+          tag_name: v${{ needs.check.outputs.rsync_version }}
+          body: |
+            Built from commit: ${{ github.sha }}
           files: compiled/*
