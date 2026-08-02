@@ -38,8 +38,7 @@ jobs:
             exit 0
           fi
 
-          TAG="v${{ steps.version.outputs.rsync_version }}"
-          BUILT_SHA=$(gh release view "$TAG" --json body -q .body 2>/dev/null | grep -oP '(?<=Built from commit: )[0-9a-f]{40}' || true)
+          BUILT_SHA=$(gh release view --json body -q .body 2>/dev/null | grep -oP '(?<=Built from commit: )[0-9a-f]{40}' || true)
 
           if [ "$BUILT_SHA" = "${{ github.sha }}" ]; then
             echo "should_build=false" >> "$GITHUB_OUTPUT"
@@ -75,22 +74,26 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: rsync-android
           path: compiled
 
-      - name: Move release tag to current commit
+      - name: Compute release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v${{ needs.check.outputs.rsync_version }}"
-          git tag -f "$TAG" "${{ github.sha }}"
-          git push --force origin "refs/tags/$TAG"
+          DATE=$(date -u +%Y%m%d)
+          PREFIX="v${{ needs.check.outputs.rsync_version }}-${DATE}"
+          COUNT=$(gh api "repos/${{ github.repository }}/git/matching-refs/tags/${PREFIX}" --jq 'length')
+          NUM=$(printf "%02d" "$COUNT")
+          echo "tag=${PREFIX}${NUM}" >> "$GITHUB_OUTPUT"
 
       - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
-          tag_name: v${{ needs.check.outputs.rsync_version }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          make_latest: true
           body: |
             Built from commit: ${{ github.sha }}
           files: compiled/*
