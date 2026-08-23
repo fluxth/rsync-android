@@ -1,7 +1,7 @@
 FROM debian:sid-20260713@sha256:7469781d68f44940c9494eeba6e7ab89063947f794320d61c193bf027aeb7761
 
 # renovate: datasource=github-releases depName=RsyncProject/rsync extractVersion=^v(?<version>.*)$
-ARG RSYNC_VERSION=3.4.4
+ARG RSYNC_VERSION=3.5.0
 # renovate: datasource=github-releases depName=Cyan4973/xxHash extractVersion=^v(?<version>.*)$
 ARG XXHASH_VERSION=0.8.3
 # renovate: datasource=github-releases depName=lz4/lz4 extractVersion=^v(?<version>.*)$
